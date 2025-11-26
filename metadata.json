@@ -1,0 +1,5 @@
+{
+  "name": "ResearchRadar",
+  "description": "A comprehensive research tracking tool powered by Gemini. Create custom news feeds for specific scientific fields, generate AI-curated summaries, and stay updated with grounded sources from Google Search.",
+  "requestFramePermissions": []
+}
