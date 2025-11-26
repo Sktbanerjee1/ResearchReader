@@ -17,46 +17,38 @@ export const fetchResearchBriefing = async (topic: string, days: number = 30): P
     const prompt = `
       You are an elite Research Scout. The user is tracking the scientific field: "${topic}".
       
-      **Goal**: Find the latest (last ${days} days) primary research papers, pre-prints, and scientific publications.
+      **Goal**: Find the 4-6 most significant primary research papers published in the last ${days} days.
       
-      **CRITICAL INSTRUCTION FOR LINKS**:
-      - You MUST include a valid, direct URL for every paper listed.
-      - **VERIFY THE URL**: The URL must point to the specific article, abstract, or PDF. Do NOT use generic journal homepages.
-      - **ACCURACY**: If you cannot find a specific, direct link to the source, DO NOT include the paper in the list.
-      - **Google Search**: Use the search tool to explicitly find the official URL for each paper title you discover.
+      **CRITICAL - LINK VERIFICATION RULES**:
+      1. **DIRECT LINKS ONLY**: You must provide a direct URL to the specific article, abstract, or PDF (e.g., specific DOI link, arxiv.org/abs/..., nature.com/articles/...).
+      2. **NO GENERIC LINKS**: Do NOT use journal homepages (e.g., "nature.com") or search result pages.
+      3. **VERIFY**: If you cannot find a direct, working URL for a specific paper, **DO NOT INCLUDE IT**. It is better to return fewer high-quality results than broken links.
+      
+      **Sources Strategy**:
+      - Biomedical: PubMed, Nature Medicine, The Lancet, JAMA, bioRxiv.
+      - CS/AI: ArXiv, Hugging Face Papers, NeurIPS/ICLR/CVPR proceedings, IEEE Xplore.
+      - Physics/Chem: APS, ACS, Science, Nature, arXiv.
+      - General Science: ScienceDaily, EurekAlert (only if linking to source paper).
 
-      **Strategy**:
-      1. **Determine the Domain & Sources**:
-         - If Biomedical/Medical: Prioritize PubMed, Nature Medicine, The Lancet, JAMA, bioRxiv.
-         - If Computer Science/AI: Prioritize ArXiv, Hugging Face Papers, NeurIPS/ICLR proceedings, IEEE Xplore.
-         - If Physics/Chem: Prioritize APS, ACS, Science, Nature, arXiv.
-         - If Social Science: Prioritize SSRN, JSTOR, Sage.
-         - (Adapt for other fields accordingly).
+      **Output Format (Strict Markdown)**:
+      # Research Update: ${topic}
       
-      2. **Execute Search**: Use the Google Search tool to find *specific, named papers* released recently (within the last ${days} days) in these sources.
-      
-      3. **Compile Briefing**:
-         - Select the top 3-6 most impactful papers.
-         - **MANDATORY**: You MUST provide a direct link to the paper, abstract, or DOI for every item.
-         - Do not output generic news summaries unless they link to a study.
-      
-      **Output Format (Markdown)**:
-      # Research Update: ${topic} (${days} Days)
-      
-      > *Scanning Sources: [List the specific journals/repos you targeted]*
-      
-      ## [Title of the Research Paper](URL_HERE)
-      **Source**: *Journal Name* | **Date**: *Date*
-      
-      **Abstract**:
-      (Concise technical summary of methodology and results)
-      
-      **Significance**:
-      (Why this paper is important)
+      > *Scanning sources for the last ${days} days...*
       
       ---
       
-      ## [Next Paper Title](URL_HERE)
+      ## Paper Title
+      **Source**: *Journal/Conference Name* | **Date**: *YYYY-MM-DD*
+      
+      (Concise 2-3 sentence abstract focusing on the methodology and key result.)
+      
+      **Impact**: (One sentence on why this is significant.)
+      
+      [Read Full Paper →](DIRECT_URL_HERE)
+      
+      ---
+      
+      ## Next Paper Title
       ...
     `;
 

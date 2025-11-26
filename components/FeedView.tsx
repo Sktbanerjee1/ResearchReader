@@ -146,7 +146,7 @@ export const FeedView: React.FC<FeedViewProps> = ({ feed, onUpdateFeed, onBack, 
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-4 md:p-8 scroll-smooth">
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-3xl mx-auto space-y-6">
           
           {loading.status === 'error' && (
             <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-center gap-3">
@@ -184,11 +184,15 @@ export const FeedView: React.FC<FeedViewProps> = ({ feed, onUpdateFeed, onBack, 
           )}
 
           {latestUpdate && (
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="bg-slate-50/50 border-b border-slate-100 px-6 py-3 flex items-center justify-between text-xs text-slate-500 font-medium uppercase tracking-wide">
-                <div className="flex items-center gap-2">
-                   <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                   Latest Research Briefing ({currentDays} Days)
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[60vh]">
+               {/* Metadata bar */}
+              <div className="bg-slate-50 border-b border-slate-100 px-8 py-4 flex items-center justify-between text-xs text-slate-500 font-medium uppercase tracking-wide">
+                <div className="flex items-center gap-2 text-indigo-600">
+                   <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                    </span>
+                   Latest Briefing
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock size={14} />
@@ -196,16 +200,15 @@ export const FeedView: React.FC<FeedViewProps> = ({ feed, onUpdateFeed, onBack, 
                 </div>
               </div>
 
-              <div className="p-8">
+              <div className="p-8 md:p-10">
                 <MarkdownRenderer content={latestUpdate.content} />
               </div>
 
-              {/* Sources Section - kept as a bibliography */}
+              {/* Sources Footer */}
               {latestUpdate.sources && latestUpdate.sources.length > 0 && (
-                <div className="bg-slate-50 border-t border-slate-200 p-6">
-                  <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                    <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
-                    Source Bibliography
+                <div className="bg-slate-50/80 border-t border-slate-100 p-8">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
+                    Reference List
                   </h3>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {latestUpdate.sources.map((source, idx) => (
@@ -214,20 +217,16 @@ export const FeedView: React.FC<FeedViewProps> = ({ feed, onUpdateFeed, onBack, 
                         href={source.uri}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-start gap-3 p-3 rounded-lg bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all group"
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-white hover:shadow-sm hover:ring-1 hover:ring-slate-200 transition-all group"
                       >
-                        <div className="mt-1 min-w-[16px]">
-                          <FileText size={16} className="text-slate-400 group-hover:text-indigo-500" />
-                        </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-700 truncate group-hover:text-indigo-700 transition-colors">
+                          <p className="text-sm font-medium text-slate-700 truncate group-hover:text-indigo-600 transition-colors">
                             {source.title}
                           </p>
-                          <p className="text-xs text-slate-400 truncate mt-0.5">
+                          <p className="text-xs text-slate-400 truncate">
                             {new URL(source.uri).hostname}
                           </p>
                         </div>
-                        <ExternalLink size={14} className="text-slate-300 group-hover:text-indigo-400" />
                       </a>
                     ))}
                   </div>
@@ -238,30 +237,29 @@ export const FeedView: React.FC<FeedViewProps> = ({ feed, onUpdateFeed, onBack, 
           
           {/* History */}
           {feed.updates.length > 1 && (
-             <div className="relative py-4">
-                <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                  <div className="w-full border-t border-slate-200"></div>
+             <div className="pt-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="h-px bg-slate-200 flex-1"></div>
+                  <span className="text-sm font-medium text-slate-400 uppercase tracking-wider">Previous Reports</span>
+                  <div className="h-px bg-slate-200 flex-1"></div>
                 </div>
-                <div className="relative flex justify-center">
-                  <span className="bg-slate-50 px-3 text-sm text-slate-500">Previous Briefings</span>
+                
+                <div className="space-y-6">
+                  {feed.updates.slice(1).map(update => (
+                    <div key={update.id} className="group bg-white rounded-xl p-6 border border-slate-200 hover:border-indigo-200 transition-colors">
+                        <div className="flex justify-between items-center mb-4">
+                            <span className="text-sm font-semibold text-slate-600">{new Date(update.timestamp).toLocaleDateString()}</span>
+                            <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded">Archived</span>
+                        </div>
+                        <div className="max-h-40 overflow-hidden relative opacity-60 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent z-10"></div>
+                            <MarkdownRenderer content={update.content} />
+                        </div>
+                    </div>
+                  ))}
                 </div>
              </div>
           )}
-
-          {feed.updates.slice(1).map(update => (
-             <div key={update.id} className="opacity-75 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-300">
-                <div className="bg-white rounded-xl p-6 border border-slate-200">
-                    <div className="flex justify-between items-center mb-4">
-                        <span className="text-sm text-slate-500">{new Date(update.timestamp).toLocaleDateString()}</span>
-                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">Archived</span>
-                    </div>
-                    <div className="h-32 overflow-hidden relative">
-                         <div className="absolute inset-0 bg-gradient-to-t from-white via-white/50 to-transparent top-16"></div>
-                         <MarkdownRenderer content={update.content} />
-                    </div>
-                </div>
-             </div>
-          ))}
 
         </div>
       </div>

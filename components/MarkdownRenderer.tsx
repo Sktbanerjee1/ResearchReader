@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, ArrowUpRight } from 'lucide-react';
+import { ExternalLink, ArrowRight, Quote } from 'lucide-react';
 
 interface MarkdownRendererProps {
   content: string;
@@ -49,21 +49,38 @@ const parseInline = (text: string) => {
     // Push match
     if (bestMatch.type === 'link') {
       const [_, linkText, linkUrl] = bestMatch.match;
-      parts.push(
-        <a 
-          key={i++} 
-          href={linkUrl} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-semibold hover:underline decoration-indigo-300 underline-offset-2 transition-colors"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {linkText}
-          <ArrowUpRight size={14} className="inline-block opacity-70 mb-0.5" />
-        </a>
-      );
+      
+      // Check if it's an "action" link (e.g. "Read Full Paper")
+      const isActionLink = linkText.toLowerCase().includes('read') || linkText.toLowerCase().includes('paper');
+      
+      if (isActionLink) {
+         // We handle action links in the block parser mostly, but if one appears inline:
+         parts.push(
+            <a 
+              key={i++} 
+              href={linkUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-indigo-600 font-bold hover:text-indigo-800 transition-colors"
+            >
+              {linkText} <ArrowRight size={14} />
+            </a>
+         );
+      } else {
+        parts.push(
+            <a 
+            key={i++} 
+            href={linkUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-indigo-600 hover:underline decoration-indigo-300 underline-offset-2"
+            >
+            {linkText}
+            </a>
+        );
+      }
     } else if (bestMatch.type === 'bold') {
-      parts.push(<strong key={i++} className="font-semibold text-slate-900">{bestMatch.match[1]}</strong>);
+      parts.push(<strong key={i++} className="font-bold text-slate-800">{bestMatch.match[1]}</strong>);
     } else if (bestMatch.type === 'italic') {
       parts.push(<em key={i++} className="italic text-slate-600">{bestMatch.match[1]}</em>);
     }
@@ -78,57 +95,109 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) =
   const lines = content.split('\n');
   
   return (
-    <div className="space-y-4 text-slate-700 leading-relaxed font-light">
+    <div className="space-y-3 text-slate-600 leading-relaxed font-light">
       {lines.map((line, index) => {
+        const trimmed = line.trim();
+
         // Headers
         if (line.startsWith('# ')) {
-          return <h1 key={index} className="text-3xl font-bold text-slate-900 mt-8 mb-6 pb-2 border-b border-slate-100">{line.replace('# ', '')}</h1>;
+          return (
+            <div key={index} className="pb-4 mb-6 border-b border-slate-100">
+               <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                {parseInline(line.replace('# ', ''))}
+               </h1>
+            </div>
+          );
         }
+        
+        // Article Titles (Card Headers)
         if (line.startsWith('## ')) {
-          return <h2 key={index} className="text-xl font-bold text-slate-800 mt-8 mb-4 flex items-center gap-2">
+          // If the title contains a link, extract the URL for the header wrapper
+          const linkMatch = line.match(/\[([^\]]+)\]\(([^)]+)\)/);
+          if (linkMatch) {
+             const [_, text, url] = linkMatch;
+             return (
+               <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="block mt-10 mb-3 group">
+                 <h2 className="text-xl font-bold text-slate-800 group-hover:text-indigo-600 transition-colors leading-tight">
+                   {text}
+                 </h2>
+               </a>
+             );
+          }
+          return <h2 key={index} className="text-xl font-bold text-slate-800 mt-10 mb-3 leading-tight">
              {parseInline(line.replace('## ', ''))}
           </h2>;
         }
+
+        // Subheaders
         if (line.startsWith('### ')) {
-          // Headers might contain links now, so we parse them. 
-          // The link styling in parseInline will handle the visual weight.
-          return <h3 key={index} className="text-lg font-semibold text-slate-900 mt-6 mb-2 flex items-center gap-2">
+          return <h3 key={index} className="text-lg font-semibold text-slate-900 mt-4 mb-2">
             {parseInline(line.replace('### ', ''))}
           </h3>;
         }
 
-        // Blockquotes
+        // Blockquotes (Context/Scanning text)
         if (line.startsWith('> ')) {
           return (
-            <div key={index} className="border-l-4 border-indigo-200 pl-4 py-1 my-4 bg-indigo-50/50 rounded-r-lg italic text-slate-600 text-sm">
-              {parseInline(line.replace('> ', ''))}
+            <div key={index} className="flex gap-3 text-slate-500 italic text-sm my-4 pl-2">
+              <Quote size={16} className="flex-shrink-0 opacity-40 mt-1" />
+              <div>{parseInline(line.replace('> ', ''))}</div>
             </div>
           );
+        }
+
+        // Action Buttons (Standalone links like [Read Full Paper ->](url))
+        // Regex checks if line matches exactly [text](url)
+        const exactLinkMatch = trimmed.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+        if (exactLinkMatch) {
+            const [_, text, url] = exactLinkMatch;
+            return (
+                <div key={index} className="mt-4 mb-8">
+                    <a 
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                    >
+                        {text} <ExternalLink size={14} />
+                    </a>
+                </div>
+            );
+        }
+
+        // Metadata lines (Starts with bold **Source** etc)
+        if (trimmed.startsWith('**Source**') || trimmed.startsWith('**Published')) {
+            return (
+                <div key={index} className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                     <span className="w-1 h-4 bg-indigo-400 rounded-full"></span>
+                     {parseInline(line)}
+                </div>
+            );
         }
 
         // List items
         if (line.startsWith('- ') || line.startsWith('* ')) {
           return (
-            <div key={index} className="flex gap-3 ml-2 mb-2">
-              <span className="text-indigo-400 mt-1.5">•</span>
+            <div key={index} className="flex gap-3 ml-1 mb-2">
+              <span className="text-indigo-400 mt-2 text-xs">●</span>
               <div className="flex-1">{parseInline(line.replace(/^[-*]\s+/, ''))}</div>
             </div>
           );
         }
 
         // Separator
-        if (line.trim() === '---') {
-            return <hr key={index} className="border-slate-200 my-8" />;
+        if (trimmed === '---') {
+            return <hr key={index} className="border-slate-100 my-8" />;
         }
 
         // Empty lines
-        if (line.trim() === '') {
+        if (trimmed === '') {
           return <div key={index} className="h-2"></div>;
         }
 
         // Paragraphs
         return (
-          <p key={index} className="mb-2">
+          <p key={index} className="mb-2 text-slate-600">
             {parseInline(line)}
           </p>
         );
